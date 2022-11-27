@@ -16,11 +16,13 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 # %%
+ababa = (0.4, 0.8, 0.4)
 transform = transforms.Compose([
     transforms.Resize(50),
     transforms.CenterCrop(50),
     transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    transforms.Normalize(ababa, ababa)
 ])
 
 dataset = datasets.ImageFolder('training_set', transform=transform)
@@ -29,7 +31,7 @@ N_CLASSES = len(dataset.classes)
 
 # %%
 train_set, val_set = random_split(dataset, [0.7, 0.3])
-trainloader, valloader = DataLoader(train_set, batch_size=32, shuffle=True), DataLoader(val_set, batch_size=32)
+trainloader, valloader = DataLoader(train_set, batch_size=16, shuffle=True), DataLoader(val_set, batch_size=16)
 
 
 
@@ -48,38 +50,36 @@ class mush_rec_nn(nn.Module):
     def __init__(self):
         super(mush_rec_nn, self).__init__()
         
-        self.cnn1 = nn.Conv2d(in_channels=3, out_channels=12, kernel_size=3, stride=1, padding=1)
-        self.bn1 = nn.BatchNorm2d(12)
+        self.cnn1 = nn.Conv2d(in_channels=3, out_channels=24, kernel_size=3, stride=1, padding=2)
+        self.bn1 = nn.BatchNorm2d(24)
         
-        self.cnn2 = nn.Conv2d(in_channels=12, out_channels=12, kernel_size=3, stride=1, padding=1)
-        self.bn2 = nn.BatchNorm2d(12)
+        self.cnn2 = nn.Conv2d(in_channels=24, out_channels=48, kernel_size=3, stride=1, padding=2)
+        self.bn2 = nn.BatchNorm2d(48)
         
-        self.pool = nn.MaxPool2d(2,2)
+        self.pool = nn.MaxPool2d(3, 3)
         
-        self.cnn4 = nn.Conv2d(in_channels=12, out_channels=24, kernel_size=3, stride=1, padding=1)
-        self.bn4 = nn.BatchNorm2d(24)
+        self.cnn4 = nn.Conv2d(in_channels=48, out_channels=96, kernel_size=3, stride=1, padding=2)
+        self.bn4 = nn.BatchNorm2d(96)
         
-        self.cnn5 = nn.Conv2d(in_channels=24, out_channels=24, kernel_size=3, stride=1, padding=1)
-        self.bn5 = nn.BatchNorm2d(24)
+        self.cnn5 = nn.Conv2d(in_channels=96, out_channels=96, kernel_size=3, stride=1, padding=2)
+        self.bn5 = nn.BatchNorm2d(96)
         
-        self.fc1 = nn.Linear(24 * 25 * 25, N_CLASSES)
-        
-        self.sm = nn.Softmax(dim=0)
+        self.fc1 = nn.Linear(96 * 22 * 22, N_CLASSES)
     
-    def forward(self, input, labels):
+    def forward(self, input):
         output = F.relu(self.bn1(self.cnn1(input)))
         output = F.relu(self.bn2(self.cnn2(output)))     
         output = self.pool(output)                        
         output = F.relu(self.bn4(self.cnn4(output)))     
         output = F.relu(self.bn5(self.cnn5(output)))     
-        output = output.view(-1, 24 * 25 * 25)
+        output = output.view(-1, 96 * 22 * 22)
         output = self.fc1(output)
         
-        print(output[0])
-        imageshow(input[0])
-        print(self.sm(output[0]))
-        print("Label", labels[0])
-        
+        #print(output[0])
+        #imageshow(input[0])
+        #print(self.sm(output[0]))
+        #print("Label", labels[0])
+
         return output
 
 model = mush_rec_nn()
@@ -131,7 +131,7 @@ def train(num_epochs):
 
             optimizer.zero_grad()
             
-            outputs = model(images, labels)
+            outputs = model(images)
             
             loss = loss_fn(outputs, labels)
             loss.backward()
@@ -183,8 +183,15 @@ testAccuracy()
 
 # Let's load the model we just created and test the accuracy per label
 model = mush_rec_nn()
-path = "myFirstModel.pth"
+path = "./mush_rec_model.pth"
 model.load_state_dict(torch.load(path))
+
+"""
+. . . . 
+.
+.
+.
+"""
 
 
 
