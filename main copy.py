@@ -33,7 +33,7 @@ transform = transforms.Compose([
     #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 ])
 
-dataset = datasets.ImageFolder('training_set', transform=transform)
+dataset = datasets.ImageFolder('training_set_t', transform=transform)
 N_CLASSES = len(dataset.classes)
 
 

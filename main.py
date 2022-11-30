@@ -18,21 +18,16 @@ d_mean = [0.485, 0.456, 0.406]
 t_std = [0.229, 0.224, 0.225]
 
 transform = transforms.Compose([
-    transforms.Resize(255),
-    transforms.CenterCrop(255),
+    transforms.Resize(100),
+    transforms.CenterCrop(100),
     transforms.ToTensor(),
     transforms.Normalize(d_mean, t_std),
     #transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 ])
 
-dataset = datasets.ImageFolder('training_set', transform=transform)
+dataset = datasets.ImageFolder('training_set_t', transform=transform)
 N_CLASSES = len(dataset.classes)
 
-
-#dataset_l = len(dataset)
-#train_size = int(0.9 * dataset_l)
-#val_size = dataset_l - train_size
-#train_set, val_set = Subset(dataset, range(train_size)), Subset(dataset, range(train_size, train_size + val_size))
 train_set, val_set = random_split(dataset, [0.8, 0.2])
 trainloader, valloader = DataLoader(train_set, batch_size=64, shuffle=True), DataLoader(val_set, batch_size=64)
 
@@ -49,7 +44,7 @@ class mush_rec_nn(nn.Module):
     def __init__(self):
         super(mush_rec_nn, self).__init__()
         
-        k_s = 2
+        k_s = 3
         pad = 0
 
         self.cnn1 = nn.Conv2d(in_channels=3, out_channels=12, kernel_size=k_s, stride=1, padding=pad)
@@ -72,11 +67,7 @@ class mush_rec_nn(nn.Module):
         self.pool5 = nn.MaxPool2d(2)
         self.bn5 = nn.BatchNorm2d(192)
         
-        self.cnn6 = nn.Conv2d(in_channels=192, out_channels=192, kernel_size=k_s, stride=1, padding=pad)
-        self.pool6 = nn.MaxPool2d(2)
-        self.bn6 = nn.BatchNorm2d(192)
-        
-        linr = 192 * 7 * 7
+        linr = 192 * 1 * 1
         linr2 = linr
         self.fc1 = nn.Linear(linr, linr)
         self.fc2 = nn.Linear(linr, 192)
@@ -89,19 +80,13 @@ class mush_rec_nn(nn.Module):
         output = self.pool3(F.relu(self.bn3(self.cnn3(output))))
         output = self.pool4(F.relu(self.bn4(self.cnn4(output))))  
         output = self.pool5(F.relu(self.bn5(self.cnn5(output))))
-        #output = self.pool6(F.relu(self.bn6(self.cnn6(output))))
         
-        output = output.view(-1, 192 * 7 * 7)
+        output = output.view(-1, 192 * 1 * 1)
         
         output = F.relu(self.fc1(output))
         output = self.fc2(output)
         output = self.dp1(output)
         output = self.fc3(output)
-        
-        #print(output[0])
-        #imageshow(input[0])
-        #print(self.sm(output[0]))
-        #print("Label", labels[0])
 
         return output
 
